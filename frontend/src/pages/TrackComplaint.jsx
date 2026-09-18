@@ -99,38 +99,53 @@ export default function TrackComplaint() {
           </div>
           
           <div className="relative">
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-700"></div>
-            
-            <div className="space-y-8">
-              {steps.map((step, index) => {
-                const currentIndex = getStepIndex(result.status);
-                const isCompleted = index <= currentIndex;
-                const isCurrent = index === currentIndex;
+            {result.status === 'Rejected (Fake)' ? (
+              <div className="flex flex-col items-center justify-center py-10 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl font-bold">X</span>
+                </div>
+                <h3 className="text-xl font-bold text-red-400 mb-2">Complaint Rejected</h3>
+                <p className="text-slate-300 text-center max-w-md">
+                  This complaint has been reviewed by an officer and marked as invalid or fake. 
+                  No further investigation will take place.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-700"></div>
                 
-                return (
-                  <div key={step} className="relative flex items-center">
-                    <div className={`absolute left-6 -ml-3.5 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                      isCompleted ? 'bg-success border-success text-white z-10' : 
-                      isCurrent ? 'bg-primary border-primary text-white z-10' : 
-                      'bg-surface border-slate-600 text-slate-600'
-                    }`}>
-                      {isCompleted ? <Check className="w-5 h-5" /> : <Circle className="w-3 h-3 fill-current" />}
-                    </div>
-                    <div className="pl-16">
-                      <h3 className={`font-semibold ${isCurrent || isCompleted ? 'text-white' : 'text-slate-500'}`}>
-                        {step}
-                      </h3>
-                      {isCurrent && (
-                        <p className="text-sm text-primary mt-1">Current Status</p>
-                      )}
-                      {step === 'Submitted' && isCompleted && (
-                        <p className="text-xs text-slate-400 mt-1">Received securely via encrypted channel.</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                <div className="space-y-8">
+                  {steps.map((step, index) => {
+                    const currentIndex = getStepIndex(result.status);
+                    const isCompleted = index <= currentIndex;
+                    const isCurrent = index === currentIndex;
+                    
+                    return (
+                      <div key={step} className="relative flex items-center">
+                        <div className={`absolute left-6 -ml-3.5 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                          isCompleted ? 'bg-success border-success text-white z-10' : 
+                          isCurrent ? 'bg-primary border-primary text-white z-10' : 
+                          'bg-surface border-slate-600 text-slate-600'
+                        }`}>
+                          {isCompleted ? <Check className="w-5 h-5" /> : <Circle className="w-3 h-3 fill-current" />}
+                        </div>
+                        <div className="pl-16">
+                          <h3 className={`font-semibold ${isCurrent || isCompleted ? 'text-white' : 'text-slate-500'}`}>
+                            {step}
+                          </h3>
+                          {isCurrent && (
+                            <p className="text-sm text-primary mt-1">Current Status</p>
+                          )}
+                          {step === 'Submitted' && isCompleted && (
+                            <p className="text-xs text-slate-400 mt-1">Received securely via encrypted channel.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

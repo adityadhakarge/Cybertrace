@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, Activity, CheckCircle, Search } from 'lucide-react';
-import { getComplaints, updateComplaintStatus } from '../services/api';
+import { getComplaints, updateComplaintStatus, getCurrentUser } from '../services/api';
 
 export default function OfficerDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (!currentUser || currentUser.role !== 'officer') {
+      navigate('/login');
+      return;
+    }
+    setUser(currentUser);
     setComplaints(getComplaints());
-  }, []);
+  }, [navigate]);
 
   const handleStatusChange = (id, newStatus) => {
     const updated = updateComplaintStatus(id, newStatus);
@@ -30,13 +38,15 @@ export default function OfficerDashboard() {
     resolved: complaints.filter(c => c.status === 'Resolved').length
   };
 
-  const statusOptions = ['Submitted', 'Verified', 'Under Investigation', 'Resolved'];
+  const statusOptions = ['Submitted', 'Verified', 'Under Investigation', 'Resolved', 'Rejected (Fake)'];
+
+  if (!user) return null;
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center space-x-3 mb-8">
         <ShieldAlert className="w-8 h-8 text-primary" />
-        <h1 className="text-2xl font-bold text-white">Officer Dashboard</h1>
+        <h1 className="text-2xl font-bold text-white">Officer Dashboard ({user.name})</h1>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -97,6 +107,7 @@ export default function OfficerDashboard() {
                       className={`text-xs font-semibold rounded-full px-3 py-1 border outline-none cursor-pointer appearance-none ${
                         complaint.status === 'Resolved' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
                         complaint.status === 'Submitted' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                        complaint.status === 'Rejected (Fake)' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                         'bg-orange-500/20 text-orange-400 border-orange-500/30'
                       }`}
                     >

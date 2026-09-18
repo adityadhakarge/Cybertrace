@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Upload, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { addComplaint } from '../services/api';
+import { Upload, CheckCircle2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { addComplaint, getCurrentUser } from '../services/api';
+import { motion } from 'framer-motion';
 
 export default function SubmitComplaint() {
   const navigate = useNavigate();
@@ -16,11 +17,29 @@ export default function SubmitComplaint() {
   });
 
   const [fileName, setFileName] = useState('');
+  const [fileData, setFileData] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (!user) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add the file name to the complaint data so it can be displayed later
-    const result = addComplaint({ ...formData, evidenceFileName: fileName || 'evidence_file.pdf' });
+    if (!formData.subject || !formData.description || !formData.date) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    
+    // Add the file name and data to the complaint data so it can be displayed/viewed later
+    const result = addComplaint({ 
+      ...formData, 
+      evidenceFileName: fileName || 'evidence_file.pdf',
+      evidenceFileData: fileData
+    });
     setNewComplaint(result);
     setSubmitted(true);
   };
@@ -30,17 +49,30 @@ export default function SubmitComplaint() {
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFileName(e.target.files[0].name);
+      const file = e.target.files[0];
+      setFileName(file.name);
+      
+      // Read file as base64 to store in local storage for the demo
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFileData(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   if (submitted && newComplaint) {
     return (
-      <div className="max-w-2xl mx-auto mt-10">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-2xl mx-auto mt-10"
+      >
         <div className="bg-surface border border-slate-700 rounded-xl p-8 text-center shadow-xl">
           <div className="flex justify-center mb-6">
             <CheckCircle2 className="w-16 h-16 text-success" />
@@ -85,16 +117,36 @@ export default function SubmitComplaint() {
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Submit Cyber Complaint</h1>
-      
-      <div className="bg-surface rounded-xl border border-slate-700 p-6 shadow-lg">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-3xl mx-auto"
+    >
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white mb-2">File a Cyber Complaint</h1>
+        <p className="text-slate-400">Please provide accurate details. All submissions are securely hashed on the ledger.</p>
+      </div>
+
+      <div className="bg-surface rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+        <div className="bg-slate-800/50 p-4 border-b border-slate-700 flex items-center space-x-2">
+          <ShieldCheck className="w-5 h-5 text-primary" />
+          <span className="text-sm font-medium text-slate-300">Secure Submission Gateway</span>
+        </div>
+        
+        {error && (
+          <div className="m-6 mb-0 p-4 bg-danger/10 border border-danger/30 rounded-md flex items-start space-x-3 text-red-400">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Complaint Type</label>
@@ -190,6 +242,6 @@ export default function SubmitComplaint() {
           </div>
         </form>
       </div>
-    </div>
+    </motion.div>
   );
 }

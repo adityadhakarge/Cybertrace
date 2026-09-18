@@ -45,6 +45,63 @@ const initialComplaints = [
   }
 ];
 
+// --- AUTHENTICATION MOCK ---
+
+const initialUsers = [
+  {
+    name: 'Admin Officer',
+    email: 'officer@cybercell.gov',
+    password: 'password123',
+    role: 'officer'
+  }
+];
+
+export const getUsers = () => {
+  const stored = localStorage.getItem('users');
+  if (!stored) {
+    localStorage.setItem('users', JSON.stringify(initialUsers));
+    return initialUsers;
+  }
+  return JSON.parse(stored);
+};
+
+export const registerUser = (userData) => {
+  const users = getUsers();
+  
+  // Check if email already exists
+  if (users.find(u => u.email === userData.email)) {
+    throw new Error('User with this email already exists');
+  }
+  
+  users.push(userData);
+  localStorage.setItem('users', JSON.stringify(users));
+  return true;
+};
+
+export const loginUser = (email, password, expectedRole) => {
+  const users = getUsers();
+  const user = users.find(u => u.email === email && u.password === password && u.role === expectedRole);
+  
+  if (user) {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem('userRole', user.role);
+    return user;
+  }
+  throw new Error('Invalid email, password, or role selection');
+};
+
+export const getCurrentUser = () => {
+  const stored = localStorage.getItem('currentUser');
+  return stored ? JSON.parse(stored) : null;
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('userRole');
+};
+
+// --- COMPLAINTS MOCK ---
+
 export const getComplaints = () => {
   const stored = localStorage.getItem('complaints');
   if (!stored) {
@@ -69,9 +126,12 @@ export const addComplaint = (complaintData) => {
   const mockEvidenceHash = Array(12).fill(0).map(() => Math.random().toString(16)[2]).join('');
   const mockTxHash = '0x' + Array(16).fill(0).map(() => Math.random().toString(16)[2]).join('');
   
+  const currentUser = getCurrentUser();
+
   const newComplaint = {
     id: newId,
     ...complaintData,
+    userEmail: currentUser ? currentUser.email : 'unknown',
     status: 'Submitted',
     evidenceHash: mockEvidenceHash,
     transactionHash: mockTxHash,
